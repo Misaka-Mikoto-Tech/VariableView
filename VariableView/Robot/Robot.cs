@@ -41,7 +41,7 @@ namespace VariableView.Robot
             entity.MoveTo(new Vector2(40, 30));
 
             entity = EntityManager.Instance.GetEntityById(1);
-            entity.MoveTo(new Vector2(20, 50));
+            entity.MoveTo(new Vector2(46, 85));
         }
 
         public void RemoveEntity()

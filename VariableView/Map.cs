@@ -147,8 +147,7 @@ namespace VariableView
             foreach (var __entity in oldCell.watchers)
                 __entity.NotifyEntityLeave(entity);
 
-            Vector2 newCellIdx = PosToCell(to);
-            Cell newCell = _cells[newCellIdx.X, newCellIdx.Y];
+            Cell newCell = _cells[to.X, to.Y];
             newCell.entities.Add(entity);
 
             // 向新格子的观测者发送进入消息
@@ -156,7 +155,7 @@ namespace VariableView
                 __entity.NotifyEntityEnter(entity);
 
             newCell.watchers.Add(entity);
-            _entity2Cell[entity.Id] = newCellIdx;
+            _entity2Cell[entity.Id] = to;
 
             // 更新关注格子列表
             entity.WatchCells.Remove(oldCell);
