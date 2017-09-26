@@ -35,5 +35,20 @@ namespace VariableView
         {
             return new Vector2(lhs.X / rhs.X, lhs.Y / rhs.Y);
         }
+
+        public static bool operator ==(Vector2 lhs, Vector2 rhs)
+        {
+            return lhs.X == rhs.X && lhs.Y == rhs.Y;
+        }
+
+        public static bool operator !=(Vector2 lhs, Vector2 rhs)
+        {
+            return lhs.X != rhs.X || lhs.Y != rhs.Y;
+        }
+
+        public override string ToString()
+        {
+            return $"X:{X}, Y:{Y}";
+        }
     }
 }

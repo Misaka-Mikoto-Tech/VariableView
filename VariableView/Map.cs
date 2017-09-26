@@ -11,27 +11,8 @@ namespace VariableView
     /// </summary>
     public class Cell
     {
-        [Flags]
-        public enum VisibleEdge
-        {
-            Left, Top, Right, Bottom,
-        }
-        public struct EntityInfo
-        {
-            public uint         id;
-            public bool         isCenter;       // 是否是实体的中心所在格子
-            public VisibleEdge  visibleEdge;    // 实体的哪些边是暴露在外的
-        }
-
-        // 把锁放在格子内，尽可能减少被锁的可能性
-        public object locker = new object();
-
-        /// <summary>
-        /// 在此格子内所有的实体，目前只存 id
-        /// </summary>
-        public List<uint> entities = new List<uint>();
-        //public List<EntityInfo> entities = new List<EntityInfo>(); // TODO 大体积怪
-
+        public List<Entity> entities = new List<Entity>();
+        public List<Entity> watchers = new List<Entity>();
     }
 
     /// <summary>
@@ -54,9 +35,6 @@ namespace VariableView
         private Dictionary<uint, Vector2> _entity2Cell = new Dictionary<uint, Vector2>();
         //private Dictionary<uint, List<Vector2>> _entity2Cell = new Dictionary<uint, List<Vector2>>();
 
-        private ViewManager _viewManager;
-        private object _locker = new object();
-
         public Map(int id, string name, int width, int height)
         {
             Id      = id;
@@ -65,47 +43,19 @@ namespace VariableView
             Height  = height / CellSize;
 
             _cells  = new Cell[Width, Height];
-        }
-
-        public void SetViewManager(ViewManager viewManager)
-        {
-            _viewManager = viewManager;
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                    _cells[x, y] = new Cell();
         }
 
         public Vector2 GetCellOfEntity(uint id)
         {
             Vector2 cellIdx;
-            lock (_locker)
+            if (!_entity2Cell.TryGetValue(id, out cellIdx))
             {
-                if (!_entity2Cell.TryGetValue(id, out cellIdx))
-                {
-                    cellIdx.X = -1;
-                }
+                cellIdx.X = -1;
             }
             return cellIdx;
-        }
-
-        /// <summary>
-        /// 获取特定格子内所有实体(一般只有视野线程需要调用)
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        public bool GetCellEntities(int x, int y, ref List<uint> list)
-        {
-            if (list == null || !CheckPosValid(x, y))
-            {
-                Console.WriteLine("Invalid cell pos");
-                return false;
-            }
-
-            Cell cell = _cells[x, y];
-            lock (cell.locker)
-            {
-                // 视野线程获取时每次都复制一份给它，避免出现脏读
-                list.AddRange(cell.entities);
-                return true;
-            }
         }
 
         /// <summary>
@@ -114,26 +64,34 @@ namespace VariableView
         /// <param name="id"></param>
         /// <param name="pos">真实坐标</param>
         /// <returns></returns>
-        public bool AddEntity(uint id, Vector2 pos)
+        public bool AddEntity(Entity entity)
         {
-            lock (_locker)
-            {
-                if (_entity2Cell.ContainsKey(id))
-                    return false;
-            }
+            if (_entity2Cell.ContainsKey(entity.Id))
+                return false;
 
-            Vector2 cellIdx = PosToCell(pos);
-
+            Vector2 cellIdx = PosToCell(entity.Pos);
             if (!CheckPosValid(cellIdx.X, cellIdx.Y))
                 return false;
 
-            lock(_locker)
-                _entity2Cell.Add(id, pos);
+            _entity2Cell.Add(entity.Id, cellIdx);
 
-            var cell = _cells[cellIdx.X, cellIdx.Y];
-            lock(cell.locker)
-                cell.entities.Add(id);
+            var currCell = _cells[cellIdx.X, cellIdx.Y];
+            currCell.entities.Add(entity);
 
+            // 向当前格子观测者发送进入消息
+            foreach (var __entity in currCell.watchers)
+                __entity.NotifyEntityEnter(entity);
+
+            // 设置它的观测范围
+            int dis = entity.ViewDistance / CellSize;
+            var watchList = GetEntityWatchCells(cellIdx, dis);
+            foreach(var cell in watchList)
+            {
+                cell.watchers.Add(entity);
+                entity.WatchCells.Add(cell);
+            }
+
+            entity.cell = currCell;
             return true;
         }
 
@@ -142,25 +100,22 @@ namespace VariableView
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool RemoveEntity(uint id)
+        public bool RemoveEntity(Entity entity)
         {
             Vector2 cellIdx;
-            lock (_locker)
-            {
-                if (!_entity2Cell.TryGetValue(id, out cellIdx))
-                    return false;
-            }
+            if (!_entity2Cell.TryGetValue(entity.Id, out cellIdx))
+                return false;
+
+            _entity2Cell.Remove(entity.Id);
 
             Cell cell = _cells[cellIdx.X, cellIdx.Y];
-            lock(cell.locker)
-                cell.entities.Remove(id);
+            cell.entities.Remove(entity);
+            cell.watchers.Remove(entity); // 自己也关注了自己所在的格子
 
-            lock(_locker)
-                _entity2Cell.Remove(id);
+            // 向当前格子的观测者发送离开消息
+            foreach (var __entity in cell.watchers)
+                __entity.NotifyEntityLeave(entity);
 
-            // 从 ViewManager 中把对应实体立刻移除掉，防止有实体快速的频繁进出 Map 导致出现视野错误
-            if (_viewManager != null)
-                _viewManager.RemoveEntityFromView(id);
             return true;
         }
 
@@ -170,29 +125,43 @@ namespace VariableView
         /// <param name="id"></param>
         /// <param name="to">单位是真实坐标</param>
         /// <returns></returns>
-        public bool MoveEntity(uint id, Vector2 to)
+        public bool EntityMove(Entity entity, Vector2 to)
         {
+            to = PosToCell(to);
             if (!CheckPosValid(to))
                 return false;
 
-            Vector2 cellIdx;
-            lock (_locker)
-            {
-                if (!_entity2Cell.TryGetValue(id, out cellIdx))
-                    return false;
-            }
+            var from = PosToCell(entity.Pos); // 没有换格子
+            if (from == to)
+                return false;
 
-            Cell oldCell = _cells[cellIdx.X, cellIdx.Y];
-            lock(oldCell.locker)
-                oldCell.entities.Remove(id);
+            Vector2 cellFromIdx;
+            if (!_entity2Cell.TryGetValue(entity.Id, out cellFromIdx))
+                return false;
+
+            Cell oldCell = _cells[cellFromIdx.X, cellFromIdx.Y];
+            oldCell.entities.Remove(entity);
+            oldCell.watchers.Remove(entity); // 自己也关注了自己所在的格子
+
+            // 向旧格子的观测者发送离开消息
+            foreach (var __entity in oldCell.watchers)
+                __entity.NotifyEntityLeave(entity);
 
             Vector2 newCellIdx = PosToCell(to);
             Cell newCell = _cells[newCellIdx.X, newCellIdx.Y];
-            lock(newCell.locker)
-                newCell.entities.Add(id);
+            newCell.entities.Add(entity);
 
-            lock(_locker)
-                _entity2Cell[id] = newCellIdx;
+            // 向新格子的观测者发送进入消息
+            foreach (var __entity in newCell.watchers)
+                __entity.NotifyEntityEnter(entity);
+
+            newCell.watchers.Add(entity);
+            _entity2Cell[entity.Id] = newCellIdx;
+
+            // 更新关注格子列表
+            entity.WatchCells.Remove(oldCell);
+            entity.WatchCells.Add(newCell);
+            entity.cell = newCell;
             return true;
         }
 
@@ -214,6 +183,21 @@ namespace VariableView
         {
             return new Vector2(pos.X / CellSize, pos.Y / CellSize);
         }
+
+        public List<Cell> GetEntityWatchCells(Vector2 cellIdx, int dis)
+        {
+            List<Cell> list = new List<Cell>();
+            for (int x = Math.Max(0, cellIdx.X - dis); x <= Math.Min(Width, cellIdx.X + dis); x++)
+            {
+                for (int y = Math.Max(0, cellIdx.Y - dis); y <= Math.Min(Height, cellIdx.Y + dis); y++)
+                {
+                    list.Add(_cells[x, y]);
+                }
+            }
+            return list;
+        }
+
+
     }
 #endregion
 }

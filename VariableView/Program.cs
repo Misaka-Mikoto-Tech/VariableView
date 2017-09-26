@@ -10,6 +10,9 @@ namespace VariableView
     {
         static void Main(string[] args)
         {
+            Robot.Robot robot = new VariableView.Robot.Robot();
+            robot.Run();
+            Console.ReadKey();
         }
     }
 }
