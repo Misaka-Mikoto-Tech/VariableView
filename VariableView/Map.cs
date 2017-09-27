@@ -397,6 +397,7 @@ namespace VariableView
             #endregion
             return true;
         }
+        #endregion // 非质点
 
         #region Utility
         private bool CheckPosValid(int x, int y)
@@ -486,9 +487,7 @@ namespace VariableView
 
             return list;
         }
-#endregion
-
-
+        #endregion
     }
-#endregion // 非质点
+
 }
