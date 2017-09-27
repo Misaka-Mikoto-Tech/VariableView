@@ -16,28 +16,34 @@ namespace VariableView
         public Vector2 Pos { get; set; }
 
         /// <summary>
+        /// entity 的半径(质点类型的 entity 半径为 0)
+        /// </summary>
+        public int radius { get; private set; }
+
+        /// <summary>
         /// 可视距离
         /// </summary>
         public int ViewDistance { get; private set; }
 
         /// <summary>
-        /// 自己所在格子
+        /// 自己所在格子们
         /// </summary>
-        public Cell cell;
+        public List<Cell> placeCells = new List<Cell>();
 
         /// <summary>
         /// 关注的格子
         /// </summary>
-        public List<Cell> WatchCells = new List<Cell>();
+        public List<Cell> watchCells = new List<Cell>();
         /// <summary>
         /// entity 所在的 map
         /// </summary>
         public Map map { get; private set; }
 
-        public Entity(uint id, int viewDistance, int mapId)
+        public Entity(uint id, int viewDistance, int radius, int mapId)
         {
             Id = id;
             ViewDistance = viewDistance;
+            this.radius = radius;
             map = MapManager.Instance.GetMapById(mapId);
         }
 
@@ -48,7 +54,7 @@ namespace VariableView
         public List<Entity> GetWatchEntityList()
         {
             List<Entity> list = new List<Entity>();
-            foreach (var cell in WatchCells)
+            foreach (var cell in watchCells)
                 list.AddRange(cell.entities);
             return list;
         }
@@ -57,9 +63,18 @@ namespace VariableView
         /// 获取关注者列表
         /// </summary>
         /// <returns></returns>
-        public List<Entity> GetWatcherList()
+        public HashSet<Entity> GetWatcherList()
         {
-            return cell.watchers;
+            HashSet<Entity> hashset = new HashSet<Entity>();
+            foreach(var cell in placeCells)
+            {
+                foreach(var entity in cell.watchers)
+                {
+                    hashset.Add(entity);
+                }
+            }
+                
+            return hashset;
         }
 
         public void ChangeViewDistance(int viewDistance)
@@ -69,18 +84,19 @@ namespace VariableView
 
         public void MoveTo(Vector2 newPos)
         {
+            Console.WriteLine($">>> Entity {Id} moved to {newPos.ToString()}");
+
             map.EntityMove(this, newPos);
             Pos = newPos;
-            Console.WriteLine($"Entity {Id} moved to {newPos.ToString()}");
         }
 
-        public void NotifyEntityEnter(Entity otherEntity)
+        public void NotifyEntityEnter(Entity otherEntity, Vector2 cellIdx)
         {
-            Console.WriteLine($"Entity {otherEntity.Id} Enter view of entity {Id}");
+            Console.WriteLine($"Entity {otherEntity.Id} Enter view of entity {Id} at {cellIdx.ToString()}");
         }
-        public void NotifyEntityLeave(Entity otherEntity)
+        public void NotifyEntityLeave(Entity otherEntity, Vector2 cellIdx)
         {
-            Console.WriteLine($"Entity {otherEntity.Id} Leave view of entity {Id}");
+            Console.WriteLine($"Entity {otherEntity.Id} Leave view of entity {Id} at {cellIdx.ToString()}");
         }
     }
 }

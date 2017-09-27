@@ -51,6 +51,7 @@
     <Compile Include="Robot\Robot.cs" />
     <Compile Include="Singleton.cs" />
     <Compile Include="Utils\DoubleBufferQueue.cs" />
+    <Compile Include="Utils\Utils.cs" />
     <Compile Include="Vector2.cs" />
     <Compile Include="ViewManager.cs" />
   </ItemGroup>

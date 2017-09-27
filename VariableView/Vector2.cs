@@ -50,5 +50,16 @@ namespace VariableView
         {
             return $"X:{X}, Y:{Y}";
         }
+
+        public override bool Equals(object rhs)
+        {
+            Vector2 v = (Vector2)rhs;
+            return this.X == v.X && this.Y == v.Y;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 }

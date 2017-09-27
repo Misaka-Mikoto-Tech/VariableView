@@ -25,10 +25,10 @@ namespace VariableView.Robot
         {
             Entity[] entities = new Entity[4]
             {
-                new Entity(1, 12, 1) { Pos = new Vector2(20, 20)},
-                new Entity(2, 15, 1) { Pos = new Vector2(30, 40)},
-                new Entity(3, 34, 1) { Pos = new Vector2(50, 70)},
-                new Entity(4, 70, 1) { Pos = new Vector2(100, 125)}
+                new Entity(1, 12, 3, 1) { Pos = new Vector2(20, 20)},
+                new Entity(2, 15, 0, 1) { Pos = new Vector2(30, 40)},
+                new Entity(3, 34, 0, 1) { Pos = new Vector2(50, 70)},
+                new Entity(4, 70, 15, 1) { Pos = new Vector2(100, 125)}
             };
 
             foreach(var entity in entities)
