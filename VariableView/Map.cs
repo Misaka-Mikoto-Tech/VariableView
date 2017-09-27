@@ -259,6 +259,8 @@ namespace VariableView
 
         public void ChangeEntityViewDistance_Point(Entity entity, int newViewDistance)
         {
+            newViewDistance = newViewDistance / CellSize;
+
             Vector2 cellIdx = PosToCell(entity.Pos);
             List<Cell> oldWatchCells = entity.watchCells;
             List<Cell> newWatchCells = GetEntityWatchCells(cellIdx, newViewDistance);
@@ -434,6 +436,8 @@ namespace VariableView
 
         public void ChangeEntityViewDistance_Non_Point(Entity entity, int newViewDistance)
         {
+            newViewDistance = newViewDistance / CellSize;
+
             List<Cell> oldWatchCells = new List<Cell>(entity.watchCells);
             List<Cell> newWatchCells = GetRangeEntityWatchCells(entity.placeCells, newViewDistance);
 

@@ -27,6 +27,7 @@ namespace VariableView.Robot
         {
             Entity[] entities = new Entity[4]
             {
+                // Entity 构造函数参数: id, viewDistance, radius, mapId
                 new Entity(1, 12, 3, 1) { Pos = new Vector2(20, 20)},
                 new Entity(2, 15, 0, 1) { Pos = new Vector2(30, 40)},
                 new Entity(3, 34, 0, 1) { Pos = new Vector2(50, 70)},
