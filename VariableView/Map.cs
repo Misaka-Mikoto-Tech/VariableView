@@ -106,6 +106,19 @@ namespace VariableView
                 return EntityMove_Non_Point(entity, to);
         }
 
+        /// <summary>
+        /// 更改实体的可视范围
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="newViewDistance"></param>
+        public void ChangeEntityViewDistance(Entity entity, int newViewDistance)
+        {
+            if (entity.radius / CellSize == 0)
+                ChangeEntityViewDistance_Point(entity, newViewDistance);
+            else
+                ChangeEntityViewDistance_Non_Point(entity, newViewDistance);
+        }
+
 
         #region 质点的逻辑
         public bool AddEntity_Point(Entity entity)
@@ -244,6 +257,27 @@ namespace VariableView
             return true;
         }
 
+        public void ChangeEntityViewDistance_Point(Entity entity, int newViewDistance)
+        {
+            Vector2 cellIdx = PosToCell(entity.Pos);
+            List<Cell> oldWatchCells = entity.watchCells;
+            List<Cell> newWatchCells = GetEntityWatchCells(cellIdx, newViewDistance);
+
+            // 把自己从已经离开的关注的格子中反注册自己
+            foreach (var cell in oldWatchCells)
+            {
+                cell.watchers.Remove(entity);
+            }
+
+            // 把自己注册为新关注格子的关注者
+            foreach (var cell in newWatchCells)
+            {
+                cell.watchers.Add(entity);
+            }
+
+            entity.watchCells.Clear();
+            entity.watchCells.AddRange(newWatchCells);
+        }
         #endregion
 
         #region 非质点的逻辑
@@ -396,6 +430,30 @@ namespace VariableView
             }
             #endregion
             return true;
+        }
+
+        public void ChangeEntityViewDistance_Non_Point(Entity entity, int newViewDistance)
+        {
+            List<Cell> oldWatchCells = new List<Cell>(entity.watchCells);
+            List<Cell> newWatchCells = GetRangeEntityWatchCells(entity.placeCells, newViewDistance);
+
+            // 计算关注的旧的格子和新的格子的并集和差集
+            int splitIdx = CalcIntersectionAndSubtraction(oldWatchCells, newWatchCells);
+
+            // 把自己从已经离开的关注的格子中反注册自己
+            for (int i = splitIdx; i < oldWatchCells.Count; i++)
+            {
+                oldWatchCells[i].watchers.Remove(entity);
+            }
+
+            // 把自己添加到新增加关注的格子的关注列表
+            for (int i = splitIdx; i < newWatchCells.Count; i++)
+            {
+                newWatchCells[i].watchers.Add(entity);
+            }
+
+            entity.watchCells.Clear();
+            entity.watchCells.AddRange(newWatchCells);
         }
         #endregion // 非质点
 

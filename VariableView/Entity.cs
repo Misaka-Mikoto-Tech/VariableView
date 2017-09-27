@@ -80,6 +80,7 @@ namespace VariableView
         public void ChangeViewDistance(int viewDistance)
         {
             ViewDistance = viewDistance;
+            map.ChangeEntityViewDistance(this, ViewDistance);
         }
 
         public void MoveTo(Vector2 newPos)

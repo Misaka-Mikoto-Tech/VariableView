@@ -10,4 +10,5 @@
 * 实体移动时更改自己所在的格子，触发旧格子内的实体离开事件和新格子的实体进入事件，对应的格子会把事件向注册的所有实体广播出去，实体移动后更新自己的关注列表，找出不再关注的格子，把自己从对应格子反注册，找出新关注的格子，将自己注册进去(此处用了一个快速求两个集合的并集和差集的算法，见 `Utils.cs`)
 
 ### 运行效果图
-![image](https://github.com/easy66/VariableView/blob/master/DemoPic.png)
+![image](https://github.com/easy66/VariableView/blob/master/Code.png)
+![image](https://github.com/easy66/VariableView/blob/master/Result.png)

@@ -13,6 +13,8 @@ namespace VariableView.Robot
             CreateMap();
             CreateEntity();
             MoveEntity();
+            ChangeViewDistance();
+            MoveEntity2();
             RemoveEntity();
         }
         
@@ -45,6 +47,18 @@ namespace VariableView.Robot
         public void RemoveEntity()
         {
             EntityManager.Instance.RemoveEntityById(1);
+        }
+
+        public void ChangeViewDistance()
+        {
+            Entity entity = EntityManager.Instance.GetEntityById(4);
+            entity.ChangeViewDistance(12);
+        }
+
+        public void MoveEntity2()
+        {
+            Entity entity = EntityManager.Instance.GetEntityById(1);
+            entity.MoveTo(new Vector2(150, 160));
         }
     }
 }
