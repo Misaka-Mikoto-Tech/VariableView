@@ -12,7 +12,6 @@ namespace VariableView
     public class EntityManager : Singleton<EntityManager>
     {
         private Dictionary<uint, Entity> _allEntites = new Dictionary<uint, Entity>();
-        private Map _map;
 
         public Entity GetEntityById(uint id)
         {

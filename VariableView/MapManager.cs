@@ -10,9 +10,9 @@ namespace VariableView
     {
         Dictionary<int, Map> _maps = new Dictionary<int, Map>();
 
-        public void AddMap(int id, string name, int width, int height)
+        public void AddMap(int id, string name, int width, int height, int cellSize)
         {
-            Map map = new Map(id, name, width, height);
+            Map map = new Map(id, name, width, height, cellSize);
             _maps.Add(map.Id, map);
         }
 

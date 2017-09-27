@@ -35,12 +35,13 @@ namespace VariableView
         private Dictionary<uint, Vector2> _entity2Cell = new Dictionary<uint, Vector2>();
         //private Dictionary<uint, List<Vector2>> _entity2Cell = new Dictionary<uint, List<Vector2>>();
 
-        public Map(int id, string name, int width, int height)
+        public Map(int id, string name, int width, int height, int cellSize)
         {
-            Id      = id;
-            Name    = name;
-            Width   = width / CellSize;
-            Height  = height / CellSize;
+            Id          = id;
+            Name        = name;
+            CellSize    = cellSize;
+            Width       = width / CellSize;
+            Height      = height / CellSize;
 
             _cells  = new Cell[Width, Height];
             for (int y = 0; y < Height; y++)
