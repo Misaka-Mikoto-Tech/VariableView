@@ -394,23 +394,22 @@ namespace VariableView
 
             int dis = entity.ViewDistance / CellSize;
 
-            #region 处理占据的格子改变相关逻辑
+            // 处理占据的格子改变相关逻辑
             {
                 List<Cell> oldPlaceCells = new List<Cell>(entity.placeCells);
                 List<Cell> newPlaceCells = GetEntityPlaceCells(to, entity.radius / CellSize);
 
                 ProcessEntityPlaceCellChange(entity, oldPlaceCells, newPlaceCells);
             }
-            #endregion
 
-            #region 处理关注的格子发生改变相关逻辑
+            // 处理关注的格子发生改变相关逻辑
             {
                 List<Cell> oldWatchCells = new List<Cell>(entity.watchCells);
                 List<Cell> newWatchCells = GetRangeEntityWatchCells(entity.placeCells, dis);
 
                 ProcessEntityWatchCellChange(entity, oldWatchCells, newWatchCells);
             }
-            #endregion
+
             return true;
         }
 
