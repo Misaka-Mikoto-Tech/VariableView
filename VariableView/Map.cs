@@ -140,8 +140,8 @@ namespace VariableView
             currCell.entities.Add(entity);
 
             // 向此格子观测者发送进入消息
-            foreach (var __entity in currCell.watchers)
-                __entity.NotifyEntityEnter(entity, currCell.idx);
+            foreach (var watcher in currCell.watchers)
+                watcher.NotifyEntityEnter(entity, currCell.idx);
 
             // 把自己注册为可观测范围内格子的关注者
             int dis = entity.ViewDistance / CellSize;
@@ -171,8 +171,8 @@ namespace VariableView
             currCell.watchers.Remove(entity); // 自己也关注了自己所在的格子
 
             // 向当前格子的观测者发送离开消息
-            foreach (var __entity in currCell.watchers)
-                __entity.NotifyEntityLeave(entity, currCell.idx);
+            foreach (var watcher in currCell.watchers)
+                watcher.NotifyEntityLeave(entity, currCell.idx);
 
             // 把 entity 从它关注的格子中取消自己的注册
             foreach (var cell in entity.watchCells)
@@ -207,19 +207,19 @@ namespace VariableView
                 Cell newPlaceCell = _cells[to.X, to.Y];
 
                 // 向旧格子的观测者发送离开消息并把自己从其中移除
-                foreach (var __entity in oldPlaceCell.watchers)
+                foreach (var watcher in oldPlaceCell.watchers)
                 {
-                    if (__entity != entity)
-                        __entity.NotifyEntityLeave(entity, oldPlaceCell.idx);
+                    if (watcher != entity)
+                        watcher.NotifyEntityLeave(entity, oldPlaceCell.idx);
                 }
 
                 oldPlaceCell.entities.Remove(entity);
 
                 // 把 Entity 添加到新格子的节点列表内并向新格子的观测者发送进入消息
-                foreach (var __entity in newPlaceCell.watchers)
+                foreach (var watcher in newPlaceCell.watchers)
                 {
-                    if (__entity != entity)
-                        __entity.NotifyEntityEnter(entity, newPlaceCell.idx);
+                    if (watcher != entity)
+                        watcher.NotifyEntityEnter(entity, newPlaceCell.idx);
                 }
 
                 newPlaceCell.entities.Add(entity);
@@ -305,8 +305,8 @@ namespace VariableView
                 cell.entities.Add(entity);
 
                 // 向此格子观测者发送进入消息
-                foreach (var __entity in cell.watchers)
-                    __entity.NotifyEntityEnter(entity, cell.idx);
+                foreach (var watcher in cell.watchers)
+                    watcher.NotifyEntityEnter(entity, cell.idx);
             }
 
             // 把自己注册为可观测范围内格子的关注者
@@ -336,8 +336,8 @@ namespace VariableView
                 cell.watchers.Remove(entity); // 自己也关注了自己所在的格子
 
                 // 向当前格子的观测者发送离开消息
-                foreach (var __entity in cell.watchers)
-                    __entity.NotifyEntityLeave(entity, cell.idx);
+                foreach (var watcher in cell.watchers)
+                    watcher.NotifyEntityLeave(entity, cell.idx);
             }
 
             // 把 entity 从它关注的格子中取消自己的注册
@@ -378,10 +378,10 @@ namespace VariableView
                 for (int i = splitIdx; i < oldPlaceCells.Count; i++)
                 {
                     Cell cell = oldPlaceCells[i];
-                    foreach (var __entity in cell.watchers)
+                    foreach (var watcher in cell.watchers)
                     {
-                        if(__entity != entity)
-                            __entity.NotifyEntityLeave(entity, cell.idx);
+                        if(watcher != entity)
+                            watcher.NotifyEntityLeave(entity, cell.idx);
                     }
                         
                     cell.entities.Remove(entity);
@@ -393,10 +393,10 @@ namespace VariableView
                     Cell cell = newPlaceCells[i];
 
                     // 向新格子的观测者发送进入消息
-                    foreach (var __entity in cell.watchers)
+                    foreach (var watcher in cell.watchers)
                     {
-                        if(__entity != entity)
-                            __entity.NotifyEntityEnter(entity, cell.idx);
+                        if(watcher != entity)
+                            watcher.NotifyEntityEnter(entity, cell.idx);
                     }
 
                     cell.entities.Add(entity);
