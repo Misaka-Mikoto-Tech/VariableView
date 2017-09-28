@@ -371,7 +371,7 @@ namespace VariableView
                 List<Cell> oldPlaceCells = new List<Cell>(entity.placeCells);
                 List<Cell> newPlaceCells = GetEntityPlaceCells(to, entity.radius / CellSize);
 
-                // 计算占据的旧的格子和新的格子的并集和差集
+                // 计算占据的旧的格子和新的格子的交集和差集
                 int splitIdx = CalcIntersectionAndSubtraction(oldPlaceCells, newPlaceCells);
 
                 // 向差集中旧格子的观测者发送离开消息并把自己从其中移除
@@ -412,7 +412,7 @@ namespace VariableView
                 List<Cell> oldWatchCells = new List<Cell>(entity.watchCells);
                 List<Cell> newWatchCells = GetRangeEntityWatchCells(entity.placeCells, dis);
 
-                // 计算关注的旧的格子和新的格子的并集和差集
+                // 计算关注的旧的格子和新的格子的交集和差集
                 int splitIdx = CalcIntersectionAndSubtraction(oldWatchCells, newWatchCells);
 
                 // 把自己从已经离开的关注的格子中反注册自己
@@ -441,7 +441,7 @@ namespace VariableView
             List<Cell> oldWatchCells = new List<Cell>(entity.watchCells);
             List<Cell> newWatchCells = GetRangeEntityWatchCells(entity.placeCells, newViewDistance);
 
-            // 计算关注的旧的格子和新的格子的并集和差集
+            // 计算关注的旧的格子和新的格子的交集和差集
             int splitIdx = CalcIntersectionAndSubtraction(oldWatchCells, newWatchCells);
 
             // 把自己从已经离开的关注的格子中反注册自己
