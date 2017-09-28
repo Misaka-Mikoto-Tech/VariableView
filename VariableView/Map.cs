@@ -387,7 +387,7 @@ namespace VariableView
                     cell.entities.Remove(entity);
                 }
 
-                // 把 Entity 添加到向差集中新格子的节点列表内
+                // 把 Entity 添加到差集中新格子的节点列表内
                 for (int i = splitIdx; i < newPlaceCells.Count; i++)
                 {
                     Cell cell = newPlaceCells[i];
