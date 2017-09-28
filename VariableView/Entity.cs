@@ -79,8 +79,18 @@ namespace VariableView
 
         public void ChangeViewDistance(int viewDistance)
         {
-            ViewDistance = viewDistance;
             map.ChangeEntityViewDistance(this, ViewDistance);
+            ViewDistance = viewDistance;
+        }
+
+        /// <summary>
+        /// 更改实体的体积, 比如变身等行为
+        /// </summary>
+        /// <param name="newRadius"></param>
+        public void ChangeRadius(int newRadius)
+        {
+            map.ChangeEntityRadius(this, newRadius);
+            radius = newRadius;
         }
 
         public void MoveTo(Vector2 newPos)

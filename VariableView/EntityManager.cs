@@ -25,6 +25,7 @@ namespace VariableView
 
         public bool AddEntity(Entity entity)
         {
+            Console.WriteLine($"Add Entity {entity.Id}");
             entity.map.AddEntity(entity);
             _allEntites.Add(entity.Id, entity);
             return true;
@@ -32,6 +33,7 @@ namespace VariableView
 
         public bool RemoveEntity(Entity entity)
         {
+            Console.WriteLine($"Remove Entity {entity.Id}");
             entity.map.RemoveEntity(entity);
             _allEntites.Remove(entity.Id);
             return true;

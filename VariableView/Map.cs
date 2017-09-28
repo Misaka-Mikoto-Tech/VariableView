@@ -113,10 +113,38 @@ namespace VariableView
         /// <param name="newViewDistance"></param>
         public void ChangeEntityViewDistance(Entity entity, int newViewDistance)
         {
+            if (entity.ViewDistance / CellSize == newViewDistance / CellSize)
+                return;
+
             if (entity.radius / CellSize == 0)
                 ChangeEntityViewDistance_Point(entity, newViewDistance);
             else
                 ChangeEntityViewDistance_Non_Point(entity, newViewDistance);
+        }
+
+        /// <summary>
+        /// 更改实体的体积, 比较耗资源，请慎用
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="newRadius"></param>
+        public void ChangeEntityRadius(Entity entity, int newRadius)
+        {
+            newRadius = newRadius / CellSize;
+            Vector2 cellIdx = PosToCell(entity.Pos);
+
+            if (entity.radius / CellSize == newRadius)
+                return;
+
+            List<Cell> oldPlaceCells = entity.placeCells;
+            List<Cell> oldWatchCells = entity.watchCells;
+
+            List<Cell> newPlaceCells = GetEntityPlaceCells(cellIdx, newRadius);
+            List<Cell> newWatchCells = GetRangeEntityWatchCells(newPlaceCells, entity.ViewDistance / CellSize);
+
+            // 处理占据格子的改变
+            ProcessEntityPlaceCellChange(entity, oldPlaceCells, newPlaceCells);
+            // 处理关注列表改变
+            ProcessEntityWatchCellChange(entity, oldWatchCells, newWatchCells);
         }
 
 
@@ -371,39 +399,7 @@ namespace VariableView
                 List<Cell> oldPlaceCells = new List<Cell>(entity.placeCells);
                 List<Cell> newPlaceCells = GetEntityPlaceCells(to, entity.radius / CellSize);
 
-                // 计算占据的旧的格子和新的格子的交集和差集
-                int splitIdx = CalcIntersectionAndSubtraction(oldPlaceCells, newPlaceCells);
-
-                // 向差集中旧格子的观测者发送离开消息并把自己从其中移除
-                for (int i = splitIdx; i < oldPlaceCells.Count; i++)
-                {
-                    Cell cell = oldPlaceCells[i];
-                    foreach (var watcher in cell.watchers)
-                    {
-                        if(watcher != entity)
-                            watcher.NotifyEntityLeave(entity, cell.idx);
-                    }
-                        
-                    cell.entities.Remove(entity);
-                }
-
-                // 把 Entity 添加到差集中新格子的节点列表内
-                for (int i = splitIdx; i < newPlaceCells.Count; i++)
-                {
-                    Cell cell = newPlaceCells[i];
-
-                    // 向新格子的观测者发送进入消息
-                    foreach (var watcher in cell.watchers)
-                    {
-                        if(watcher != entity)
-                            watcher.NotifyEntityEnter(entity, cell.idx);
-                    }
-
-                    cell.entities.Add(entity);
-                }
-
-                entity.placeCells.Clear();
-                entity.placeCells.AddRange(newPlaceCells);
+                ProcessEntityPlaceCellChange(entity, oldPlaceCells, newPlaceCells);
             }
             #endregion
 
@@ -412,23 +408,7 @@ namespace VariableView
                 List<Cell> oldWatchCells = new List<Cell>(entity.watchCells);
                 List<Cell> newWatchCells = GetRangeEntityWatchCells(entity.placeCells, dis);
 
-                // 计算关注的旧的格子和新的格子的交集和差集
-                int splitIdx = CalcIntersectionAndSubtraction(oldWatchCells, newWatchCells);
-
-                // 把自己从已经离开的关注的格子中反注册自己
-                for (int i = splitIdx; i < oldWatchCells.Count; i++)
-                {
-                    oldWatchCells[i].watchers.Remove(entity);
-                }
-
-                // 把自己添加到新增加关注的格子的关注列表
-                for (int i = splitIdx; i < newWatchCells.Count; i++)
-                {
-                    newWatchCells[i].watchers.Add(entity);
-                }
-
-                entity.watchCells.Clear();
-                entity.watchCells.AddRange(newWatchCells);
+                ProcessEntityWatchCellChange(entity, oldWatchCells, newWatchCells);
             }
             #endregion
             return true;
@@ -491,7 +471,7 @@ namespace VariableView
         /// <param name="cellIdx"></param>
         /// <param name="dis"></param>
         /// <returns></returns>
-        public List<Cell> GetEntityWatchCells(Vector2 cellIdx, int dis)
+        private List<Cell> GetEntityWatchCells(Vector2 cellIdx, int dis)
         {
             List<Cell> list = new List<Cell>();
             for (int x = Math.Max(0, cellIdx.X - dis); x <= Math.Min(Width, cellIdx.X + dis); x++)
@@ -510,7 +490,7 @@ namespace VariableView
         /// <param name="cellIdxes"></param>
         /// <param name="dis"></param>
         /// <returns></returns>
-        public List<Cell> GetRangeEntityWatchCells(List<Cell> cellIdxes, int dis)
+        private List<Cell> GetRangeEntityWatchCells(List<Cell> cellIdxes, int dis)
         {
             HashSet<Cell> hashset = new HashSet<Cell>();
             foreach(var cell in cellIdxes)
@@ -529,7 +509,7 @@ namespace VariableView
         /// <param name="cellIdx"></param>
         /// <param name="radius"></param>
         /// <returns></returns>
-        public List<Cell> GetEntityPlaceCells(Vector2 cellIdx, int radius)
+        private List<Cell> GetEntityPlaceCells(Vector2 cellIdx, int radius)
         {
             List<Cell> list = new List<Cell>();
 
@@ -548,6 +528,76 @@ namespace VariableView
             }
 
             return list;
+        }
+
+        /// <summary>
+        /// 处理 Entity 占据格子列表改变
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="oldPlaceCells"></param>
+        /// <param name="newPlaceCells"></param>
+        private void ProcessEntityPlaceCellChange(Entity entity, List<Cell> oldPlaceCells, List<Cell> newPlaceCells)
+        {
+            // 计算占据的旧的格子和新的格子的交集和差集
+            int splitIdx = CalcIntersectionAndSubtraction(oldPlaceCells, newPlaceCells);
+
+            // 向差集中旧格子的观测者发送离开消息并把自己从其中移除
+            for (int i = splitIdx; i < oldPlaceCells.Count; i++)
+            {
+                Cell cell = oldPlaceCells[i];
+                foreach (var watcher in cell.watchers)
+                {
+                    if (watcher != entity)
+                        watcher.NotifyEntityLeave(entity, cell.idx);
+                }
+
+                cell.entities.Remove(entity);
+            }
+
+            // 把 Entity 添加到差集中新格子的节点列表内
+            for (int i = splitIdx; i < newPlaceCells.Count; i++)
+            {
+                Cell cell = newPlaceCells[i];
+
+                // 向新格子的观测者发送进入消息
+                foreach (var watcher in cell.watchers)
+                {
+                    if (watcher != entity)
+                        watcher.NotifyEntityEnter(entity, cell.idx);
+                }
+
+                cell.entities.Add(entity);
+            }
+
+            entity.placeCells.Clear();
+            entity.placeCells.AddRange(newPlaceCells);
+        }
+
+        /// <summary>
+        /// 处理 Entity 关注列表改变
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="oldWatchCells"></param>
+        /// <param name="newWatchCells"></param>
+        private void ProcessEntityWatchCellChange(Entity entity, List<Cell> oldWatchCells, List<Cell> newWatchCells)
+        {
+            // 计算关注的旧的格子和新的格子的交集和差集
+            int splitIdx = CalcIntersectionAndSubtraction(oldWatchCells, newWatchCells);
+
+            // 把自己从已经离开的关注的格子中反注册自己
+            for (int i = splitIdx; i < oldWatchCells.Count; i++)
+            {
+                oldWatchCells[i].watchers.Remove(entity);
+            }
+
+            // 把自己添加到新增加关注的格子的关注列表
+            for (int i = splitIdx; i < newWatchCells.Count; i++)
+            {
+                newWatchCells[i].watchers.Add(entity);
+            }
+
+            entity.watchCells.Clear();
+            entity.watchCells.AddRange(newWatchCells);
         }
         #endregion
     }
