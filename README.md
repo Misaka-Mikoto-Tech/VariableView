@@ -15,6 +15,7 @@
 
 ### 运行效果图
 ![image](https://github.com/easy66/VariableView/blob/master/Code.png)
+------------
 ![image](https://github.com/easy66/VariableView/blob/master/Result.png)
 
 ### 存在问题及解决方案
