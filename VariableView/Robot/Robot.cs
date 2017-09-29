@@ -16,6 +16,7 @@ namespace VariableView.Robot
             ChangeViewDistance();
             MoveEntity2();
             RemoveEntity();
+            ChangeRadius();
         }
         
         public void CreateMap()
@@ -60,6 +61,12 @@ namespace VariableView.Robot
         {
             Entity entity = EntityManager.Instance.GetEntityById(1);
             entity.MoveTo(new Vector2(150, 160));
+        }
+
+        public void ChangeRadius()
+        {
+            Entity entity = EntityManager.Instance.GetEntityById(2);
+            entity.ChangeRadius(17);
         }
     }
 }

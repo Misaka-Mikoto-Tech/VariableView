@@ -89,6 +89,8 @@ namespace VariableView
         /// <param name="newRadius"></param>
         public void ChangeRadius(int newRadius)
         {
+            Console.WriteLine($">>> Entity {Id} change radius from {radius} to {newRadius}");
+
             map.ChangeEntityRadius(this, newRadius);
             radius = newRadius;
         }
